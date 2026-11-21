@@ -55,6 +55,8 @@ Einrichtung (bereits erledigt, nur zur Dokumentation):
 
 3. In Supabase unter **Authentication → URL Configuration → Redirect URLs** die Adresse `https://ajzeytin-beep.github.io/Buchhaltung-Loppersum/` hinzufügen. Dann funktioniert „Passwort vergessen“ auch hier.
 
+**Datenbank wach halten:** Kostenlose Supabase-Projekte pausieren nach 7 Tagen ohne Nutzung. Der Ablauf `.github/workflows/datenbank-wach-halten.yml` fragt die Datenbank deshalb zweimal pro Woche kurz an (Repository → **Actions** → „Datenbank wach halten“). Schlägt er fehl, ist das Projekt vermutlich pausiert: bei supabase.com anmelden und das Projekt mit „Restore project“ wieder starten.
+
 > Adressen und Geburtstage sind personenbezogene Daten. Ausgetretene Mitglieder sollten nach Ablauf der Aufbewahrungsfristen gelöscht werden.
 
 ## Veröffentlichen (GitHub Pages)
