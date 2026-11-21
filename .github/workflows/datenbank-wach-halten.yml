@@ -1,0 +1,48 @@
+# Hält die Supabase-Datenbank wach.
+# Kostenlose Supabase-Projekte pausieren nach 7 Tagen ohne Nutzung. Dieser Ablauf fragt die
+# Datenbank zweimal pro Woche kurz an, damit Buchhaltung und Sani-Trainer erreichbar bleiben.
+# Ist die Datenbank trotzdem pausiert, schlägt der Lauf fehl und GitHub schickt eine E-Mail.
+# Von Hand starten: Repository → Actions → „Datenbank wach halten“ → „Run workflow“.
+name: Datenbank wach halten
+
+on:
+  schedule:
+    - cron: "17 5 * * 1,4" # montags und donnerstags, 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write # damit GitHub den Zeitplan nicht nach 60 Tagen ohne Änderungen abschaltet
+
+jobs:
+  anfragen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Datenbank anfragen
+        run: |
+          # Adresse und öffentlichen Schlüssel aus der App-Einstellung lesen (kein Geheimnis)
+          URL=$(grep -oP 'supabaseUrl:\s*"\K[^"]+' shared/config.js)
+          KEY=$(grep -oP 'supabaseAnonKey:\s*"\K[^"]+' shared/config.js)
+          CODE=000
+          for i in 1 2 3; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 30 \
+              -H "apikey: $KEY" "$URL/rest/v1/vw_settings?select=id&limit=1" || true)
+            # 2xx oder 4xx: Die Datenbank hat geantwortet (ohne Anmeldung gibt es bewusst keine Daten).
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 500 ]; then
+              echo "Datenbank ist wach (HTTP $CODE)."
+              exit 0
+            fi
+            echo "Versuch $i: HTTP $CODE – neuer Versuch in 30 Sekunden"
+            sleep 30
+          done
+          echo "::error::Die Datenbank antwortet nicht (HTTP $CODE). Vermutlich ist das Supabase-Projekt pausiert: bei supabase.com anmelden und das Projekt DRK-Loppersum mit „Restore project“ wieder starten."
+          exit 1
+
+      - name: Zeitplan aktiv halten
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/datenbank-wach-halten.yml/enable" || true

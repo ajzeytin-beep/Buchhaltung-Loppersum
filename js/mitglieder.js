@@ -36,7 +36,7 @@ export function renderList(el, { params }) {
     </form>
     <div class="card">
       ${list.length ? `<div class="table-wrap"><table class="book members">
-        <thead><tr><th>Name</th><th>Adresse</th><th>Geburtstag</th><th>Eintritt</th><th>Getränkepauschale ${year}</th></tr></thead>
+        <thead><tr><th>Name</th><th>Adresse</th><th>Geburtstag</th><th>Eintritt</th><th>Pauschale ${year}</th></tr></thead>
         <tbody>${list.map((m) => {
           const s = drinksStatus(m, year);
           const monthly = s.period === "monat";
